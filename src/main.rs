@@ -1,4 +1,7 @@
-use evdev::{AbsInfo, AbsoluteAxisType, EventType, InputEvent, InputEventKind, Key, uinput::VirtualDeviceBuilder, UinputAbsSetup};
+use evdev::{
+    uinput::VirtualDeviceBuilder, AbsInfo, AbsoluteAxisType, EventType, InputEvent, InputEventKind,
+    Key, UinputAbsSetup,
+};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let abs_setup = AbsInfo::new(0, 0, 1, 0, 0, 1);
@@ -9,8 +12,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .name("Virtual analog buttons")
         .with_absolute_axis(&btn1)?
         .with_absolute_axis(&btn2)?
-        .build()
-        .unwrap();
+        .build()?;
 
     for path in output_device.enumerate_dev_nodes_blocking()? {
         let path = path?;
@@ -21,7 +23,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         device.supported_keys().is_some_and(|keys| {
             keys.contains(Key::BTN_EXTRA) && keys.contains(Key::BTN_SIDE)
         })
-    }).ok_or("Could not find input device")?;
+    }).ok_or("Could not find a suitable input device. Is the device plugged in and does the program have permission to access it?")?;
 
     println!("Input device found on path {}", input_path.display());
     if let Some(name) = input_device.name() {
@@ -31,10 +33,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     loop {
         for event in input_device.fetch_events()? {
             match (event.kind(), event.value()) {
-                (InputEventKind::Key(Key::BTN_EXTRA), 0) => output_device.emit(&[InputEvent::new(EventType::ABSOLUTE, btn1.code(), 0)])?,
-                (InputEventKind::Key(Key::BTN_EXTRA), 1) => output_device.emit(&[InputEvent::new(EventType::ABSOLUTE, btn1.code(), 1)])?,
-                (InputEventKind::Key(Key::BTN_SIDE), 0) => output_device.emit(&[InputEvent::new(EventType::ABSOLUTE, btn2.code(), 0)])?,
-                (InputEventKind::Key(Key::BTN_SIDE), 1) => output_device.emit(&[InputEvent::new(EventType::ABSOLUTE, btn2.code(), 1)])?,
+                (InputEventKind::Key(Key::BTN_EXTRA), 0) => {
+                    output_device.emit(&[InputEvent::new(EventType::ABSOLUTE, btn1.code(), 0)])?
+                }
+                (InputEventKind::Key(Key::BTN_EXTRA), 1) => {
+                    output_device.emit(&[InputEvent::new(EventType::ABSOLUTE, btn1.code(), 1)])?
+                }
+                (InputEventKind::Key(Key::BTN_SIDE), 0) => {
+                    output_device.emit(&[InputEvent::new(EventType::ABSOLUTE, btn2.code(), 0)])?
+                }
+                (InputEventKind::Key(Key::BTN_SIDE), 1) => {
+                    output_device.emit(&[InputEvent::new(EventType::ABSOLUTE, btn2.code(), 1)])?
+                }
                 _ => {}
             }
         }
