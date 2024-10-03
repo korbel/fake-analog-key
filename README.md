@@ -2,7 +2,7 @@
 
 Creates a virtual device with two analog buttons and binds them to the side buttons of your mouse.
 
-*This is a sample project, fork and modify it to your needs.*
+**This is a sample project, fork and modify it to your needs.**
 
 ## Development
 
